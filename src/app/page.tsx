@@ -5,6 +5,7 @@ import { Music, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { AuroraBackground } from '@/components/ui/aurora-background';
 import { motion } from 'framer-motion';
+import { Recorder } from '@/components/audio-player/Recorder';
 
 export default function HomePage() {
   return (
@@ -26,6 +27,7 @@ export default function HomePage() {
           className="flex justify-center"
         >
           <Music className="h-24 w-24 text-black dark:text-white" />
+          <Recorder />
         </motion.div>
 
         <div className="text-center space-y-4 z-30">
