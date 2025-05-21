@@ -20,9 +20,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthInitializer />
-        <div className="relative min-h-screen">
-          <main className="relative z-0">{children}</main>
+        <div className="relative min-h-screen bg-zinc-800">
           <NavBar />
+          <main className="relative z-0 mt-auto">{children}</main>
         </div>
       </body>
     </html>

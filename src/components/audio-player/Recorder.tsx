@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { Mic, MicOff, StopCircle, Settings } from "lucide-react";
+import { Mic, MicOff, StopCircle, Settings, Save } from "lucide-react";
+import { storeAudio } from "@/data-access/recorder";
 
 export const Recorder = () => {
   const [recordingState, setRecordingState] = useState<
@@ -11,6 +12,7 @@ export const Recorder = () => {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isStoring, setIsStoring] = useState(false);
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -130,6 +132,26 @@ export const Recorder = () => {
     setRecordingState(recordingState === "disabled" ? "idle" : "disabled");
   };
 
+  const handleStoreAudio = async () => {
+    if (!chunks.current.length) return;
+    setIsStoring(true);
+    try {
+      const { success, error } = await storeAudio(chunks.current);
+      if (success) {
+        console.log("Audio stored successfully");
+        setAudioBlob(null);
+        chunks.current = [];
+      } else {
+        console.error("Error storing audio:", error);
+      }
+    } catch (error) {
+      console.error("Error storing audio:", error);
+    } finally {
+      setIsStoring(false);
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Recording Button */}
@@ -225,15 +247,30 @@ export const Recorder = () => {
       </div>
       {/* Audio Preview */}
       {audioBlob && (
-        <div className="w-full max-w-md mt-4 p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <div className="w-full max-w-md mt-4 p-4 rounded-lg border border-zinc-200/30 dark:border-zinc-700/30 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-lg shadow-lg">
+          <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">
             Recorded Audio Preview
           </h3>
           <audio
             controls
             src={URL.createObjectURL(audioBlob)}
-            className="w-full rounded"
+            className="w-full rounded-lg"
           />
+          <button
+            onClick={handleStoreAudio}
+            disabled={isStoring}
+            className={`
+              mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+              text-sm font-medium transition-all duration-200
+              ${isStoring 
+                ? 'bg-zinc-400 dark:bg-zinc-700 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }
+            `}
+          >
+            <Save className="h-4 w-4" />
+            {isStoring ? 'Saving...' : 'Save Recording'}
+          </button>
         </div>
       )}
     </div>

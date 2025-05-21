@@ -8,13 +8,11 @@ interface LyricsLine {
 interface LyricsDisplayProps {
   lyrics: LyricsLine[];
   currentTime: number;
-  darkMode?: boolean;
 }
 
 export function LyricsDisplay({
   lyrics,
   currentTime,
-  darkMode = true
 }: LyricsDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [prevIndex, setPrevIndex] = useState(-1);
@@ -62,14 +60,39 @@ export function LyricsDisplay({
 
   const progressPercentage = getProgressPercentage();
 
+  if(lyrics.length === 0) {
+    return (
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="relative p-8 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+          {/* Title bar */}
+          <div className="mb-6 relative">
+            <h2 className="text-zinc-900 dark:text-white text-xl font-bold text-center">Now Playing</h2>
+            <div className="h-px w-16 bg-blue-600/30 dark:bg-blue-500/30 rounded-full mx-auto mt-2"></div>
+          </div>
+          
+          {/* Lyrics container */}
+          <div 
+            ref={containerRef}
+            className="relative h-96 overflow-hidden py-20"
+          >
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute top-0 h-1/3 w-full bg-gradient-to-b from-white/10 dark:from-zinc-900/40 to-transparent z-10"></div>
+              <div className="absolute bottom-0 h-1/3 w-full bg-gradient-to-t from-white/10 dark:from-zinc-900/40 to-transparent z-10"></div>
+            </div>
+            <div className="text-zinc-600 dark:text-zinc-400 text-center">No lyrics found</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="relative p-8 bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden border border-zinc-800">
-  
+      <div className="relative p-8 bg-white/10 dark:bg-zinc-900/40 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/10">
         {/* Title bar */}
         <div className="mb-6 relative">
-          <h2 className="text-gray-100 text-xl font-bold text-center">Now Playing</h2>
-          <div className="h-px w-16 bg-gray-400 rounded-full mx-auto mt-2 opacity-30"></div>
+          <h2 className="text-zinc-900 dark:text-white text-xl font-bold text-center">Now Playing</h2>
+          <div className="h-px w-16 bg-blue-600/30 dark:bg-blue-500/30 rounded-full mx-auto mt-2"></div>
         </div>
         
         {/* Lyrics container */}
@@ -78,10 +101,10 @@ export function LyricsDisplay({
           className="relative h-96 overflow-hidden py-20"
         >
           <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 h-1/3 w-full z-10"></div>
-            <div className="absolute bottom-0 h-1/3 w-full z-10"></div>
+            <div className="absolute top-0 h-1/3 w-full bg-gradient-to-b from-white/10 dark:from-zinc-900/40 to-transparent z-10"></div>
+            <div className="absolute bottom-0 h-1/3 w-full bg-gradient-to-t from-white/10 dark:from-zinc-900/40 to-transparent z-10"></div>
           </div>
-          
+
           {visibleLines.map((line, index) => {
             const isActive = index === currentVisibleIndex;
             
@@ -98,17 +121,17 @@ export function LyricsDisplay({
               >
                 {isActive ? (
                   <div className="relative">
-                    <span className="text-white">{line.text}</span>
+                    <span className="text-zinc-900 dark:text-white">{line.text}</span>
                     <div className="relative overflow-hidden mt-1">
-                      <div className="h-px w-full bg-gray-700 rounded-full"></div>
+                      <div className="h-px w-full bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
                       <div 
-                        className="absolute top-0 left-0 h-px bg-white rounded-full transition-all duration-200 ease-out"
+                        className="absolute top-0 left-0 h-px bg-blue-600 dark:bg-blue-500 rounded-full transition-all duration-200 ease-out"
                         style={{ width: `${progressPercentage}%` }}
                       ></div>
                     </div>
                   </div>
                 ) : (
-                  <span className="text-gray-400 opacity-70">{line.text}</span>
+                  <span className="text-zinc-600 dark:text-zinc-400">{line.text}</span>
                 )}
               </div>
             );
