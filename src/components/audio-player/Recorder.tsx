@@ -17,6 +17,11 @@ export const Recorder = () => {
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
 
+  const stopTracks = () => {
+    if (mediaRecorder.current) {
+      mediaRecorder.current.stream.getTracks().forEach((track) => track.stop());
+    }
+  };
   const getPermissionState = async () => {
     try {
       const permissionStatus = await navigator.permissions.query({
@@ -39,6 +44,7 @@ export const Recorder = () => {
 
   const getMicrophonePermissions = async () => {
     try {
+      stopTracks();
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: selectedMic ? { deviceId: selectedMic } : true,
       });
@@ -91,6 +97,7 @@ export const Recorder = () => {
       throw Error("Media Recorder is null");
     }
     mediaRecorder.current.stop();
+    stopTracks();
     mediaRecorder.current.onstop = () => {
       console.log("On stop handler");
       const blob = new Blob(chunks.current, { type: "audio/webm" });
@@ -262,14 +269,15 @@ export const Recorder = () => {
             className={`
               mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg
               text-sm font-medium transition-all duration-200
-              ${isStoring 
-                ? 'bg-zinc-400 dark:bg-zinc-700 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
+              ${
+                isStoring
+                  ? "bg-zinc-400 dark:bg-zinc-700 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
               }
             `}
           >
             <Save className="h-4 w-4" />
-            {isStoring ? 'Saving...' : 'Save Recording'}
+            {isStoring ? "Saving..." : "Save Recording"}
           </button>
         </div>
       )}
