@@ -20,6 +20,7 @@ export const Recorder = () => {
   const stopTracks = () => {
     if (mediaRecorder.current) {
       mediaRecorder.current.stream.getTracks().forEach((track) => track.stop());
+      mediaRecorder.current = null;
     }
   };
   const getPermissionState = async () => {
@@ -32,6 +33,7 @@ export const Recorder = () => {
         permissionStatus.state === "granted" ? "idle" : "disabled"
       );
       permissionStatus.onchange = () => {
+        stopTracks();
         setPermission(permissionStatus.state);
         setRecordingState(
           permissionStatus.state === "granted" ? "idle" : "disabled"
@@ -80,6 +82,14 @@ export const Recorder = () => {
       }
     };
 
+    mediaRecorder.current.onstop = () => {
+      console.log("On stop handler");
+      stopTracks();
+      const blob = new Blob(chunks.current, { type: "audio/webm" });
+      setAudioBlob(blob);
+      setRecordingState("idle");
+    };
+
     mediaRecorder.current.onerror = (error) => {
       throw Error(error.error);
     };
@@ -97,32 +107,37 @@ export const Recorder = () => {
       throw Error("Media Recorder is null");
     }
     mediaRecorder.current.stop();
-    stopTracks();
-    mediaRecorder.current.onstop = () => {
-      console.log("On stop handler");
-      const blob = new Blob(chunks.current, { type: "audio/webm" });
-      setAudioBlob(blob);
-      setRecordingState("idle");
-    };
   };
 
+  // Get permissions once on load
   useEffect(() => {
     getPermissionState();
+
+    return () => {
+      stopTracks();
+    };
   }, []);
 
+  // Set up device list once permissions are granted
   useEffect(() => {
-    if (permission === "denied" || permission === "prompt") {
-      getMicrophonePermissions();
-    } else {
+    if (permission === "granted") {
       getDeviceDetails();
     }
-  }, [permission, selectedMic]);
+  }, [permission]);
 
+  // Set selected mic only when devices are loaded
   useEffect(() => {
     if (devices.length > 0 && !selectedMic) {
       setSelectedMic(devices[0].deviceId);
     }
   }, [devices]);
+
+  // Only re-acquire stream when mic actually changes (not on permission)
+  useEffect(() => {
+    if (selectedMic && permission === "granted") {
+      getMicrophonePermissions();
+    }
+  }, [selectedMic]);
 
   const handleRecording = () => {
     if (recordingState === "disabled") return;
