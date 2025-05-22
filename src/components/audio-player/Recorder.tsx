@@ -13,7 +13,7 @@ export const Recorder = () => {
   const [selectedMic, setSelectedMic] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isStoring, setIsStoring] = useState(false);
-  const [mimeType, setMimeType] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string>("audio/webm");
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -67,7 +67,9 @@ export const Recorder = () => {
         ? "audio/webm"
         : "audio/mp4"; // or "audio/ogg"
       setMimeType(mimeTypeSupported);
-      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: mimeTypeSupported,
+      });
 
       mediaRecorder.current = new MediaRecorder(stream, {
         mimeType: "audio/webm",
