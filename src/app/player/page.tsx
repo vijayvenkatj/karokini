@@ -1,16 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import {
-  Play, Pause, SkipBack, SkipForward, Volume2, VolumeX,
-  RefreshCw, Loader2, Mic
-} from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { FileUpload } from '@/components/player/FileUpload';
-import { LyricsDisplay } from '@/components/player/LyricsDisplay';
-import { Recorder } from '@/components/audio-player/Recorder';
-import { Howl } from 'howler';
-import { AuroraBackground } from '@/components/ui/aurora-background';
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  RefreshCw,
+  Loader2,
+  Mic,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { FileUpload } from "@/components/player/FileUpload";
+import { LyricsDisplay } from "@/components/player/LyricsDisplay";
+import { Recorder } from "@/components/audio-player/Recorder";
+import { Howl } from "howler";
+import { AuroraBackground } from "@/components/ui/aurora-background";
 
 interface FileState {
   mp3?: File;
@@ -27,7 +34,9 @@ export default function PlayerPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const soundRef = useRef<Howl | null>(null);
-  const [lyrics, setLyrics] = useState<Array<{ time: number; text: string }>>([]);
+  const [lyrics, setLyrics] = useState<Array<{ time: number; text: string }>>(
+    []
+  );
   const rafRef = useRef<number | null>(null);
   const audioUrlRef = useRef<string | null>(null);
 
@@ -66,19 +75,19 @@ export default function PlayerPage() {
           src: [audioUrl],
           html5: true,
           preload: true,
-          format: ['mp3', 'wav', 'ogg', 'm4a', 'aac'],
+          format: ["mp3", "wav", "ogg", "m4a", "aac"],
           onload: () => {
             setDuration(sound.duration());
             setIsLoading(false);
             setError(null);
           },
           onloaderror: (id, error) => {
-            console.error('Audio loading error:', error);
-            let msg = 'Failed to load audio file. ';
-            if (error === 'No codec support for selected audio sources.') {
-              msg += 'Unsupported audio format. Please try converting to MP3.';
+            console.error("Audio loading error:", error);
+            let msg = "Failed to load audio file. ";
+            if (error === "No codec support for selected audio sources.") {
+              msg += "Unsupported audio format. Please try converting to MP3.";
             } else {
-              msg += 'Please try a different file.';
+              msg += "Please try a different file.";
             }
             setError(msg);
             setIsLoading(false);
@@ -96,7 +105,7 @@ export default function PlayerPage() {
           onend: () => {
             setIsPlaying(false);
             setCurrentTime(0);
-          }
+          },
         });
 
         soundRef.current = sound;
@@ -106,16 +115,17 @@ export default function PlayerPage() {
         try {
           const text = await newFiles.lrc.text();
           const parsedLyrics = parseLRC(text);
-          if (!parsedLyrics.length) setError('No valid lyrics found in LRC file');
+          if (!parsedLyrics.length)
+            setError("No valid lyrics found in LRC file");
           else setLyrics(parsedLyrics);
         } catch (err) {
-          console.error('Lyrics parsing error:', err);
-          setError('Failed to read lyrics file');
+          console.error("Lyrics parsing error:", err);
+          setError("Failed to read lyrics file");
         }
       }
     } catch (err) {
-      console.error('File processing error:', err);
-      setError('An error occurred while processing files');
+      console.error("File processing error:", err);
+      setError("An error occurred while processing files");
     } finally {
       setIsLoading(false);
     }
@@ -124,13 +134,13 @@ export default function PlayerPage() {
   const updateProgress = () => {
     if (soundRef.current && isPlaying) {
       const currentSeek = soundRef.current.seek();
-      if (typeof currentSeek === 'number') setCurrentTime(currentSeek);
+      if (typeof currentSeek === "number") setCurrentTime(currentSeek);
       rafRef.current = requestAnimationFrame(updateProgress);
     }
   };
 
   const parseLRC = (text: string) => {
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     const lyrics: Array<{ time: number; text: string }> = [];
 
     lines.forEach((line) => {
@@ -182,7 +192,7 @@ export default function PlayerPage() {
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
@@ -211,19 +221,51 @@ export default function PlayerPage() {
                 <div className="bg-white/10 dark:bg-zinc-900/40 text-gray-50 rounded-3xl p-8 shadow-2xl border border-white/10 space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm" onClick={() => seek(Math.max(0, currentTime - 5))} disabled={isLoading}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => seek(Math.max(0, currentTime - 5))}
+                        disabled={isLoading}
+                      >
                         <SkipBack className="h-4 w-4" />
                       </Button>
-                      <Button variant="primary" size="lg" onClick={togglePlay} disabled={isLoading}>
-                        {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        onClick={togglePlay}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : isPlaying ? (
+                          <Pause className="h-5 w-5" />
+                        ) : (
+                          <Play className="h-5 w-5" />
+                        )}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => seek(Math.min(duration, currentTime + 5))} disabled={isLoading}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          seek(Math.min(duration, currentTime + 5))
+                        }
+                        disabled={isLoading}
+                      >
                         <SkipForward className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="sm" onClick={toggleMute} disabled={isLoading}>
-                        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleMute}
+                        disabled={isLoading}
+                      >
+                        {isMuted ? (
+                          <VolumeX className="h-4 w-4" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
                       </Button>
                       <input
                         type="range"
@@ -235,15 +277,25 @@ export default function PlayerPage() {
                         className="w-16"
                         disabled={isLoading}
                       />
-                      <Button variant="ghost" size="sm" onClick={resetPlayer} disabled={isLoading}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetPlayer}
+                        disabled={isLoading}
+                      >
                         <RefreshCw className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs w-10">{formatTime(currentTime)}</span>
+                    <span className="text-xs w-10">
+                      {formatTime(currentTime)}
+                    </span>
                     <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-700 relative">
-                      <div className="absolute h-full bg-blue-600 dark:bg-blue-500 transition-all duration-100" style={{ width: `${(currentTime / duration) * 100}%` }} />
+                      <div
+                        className="absolute h-full bg-blue-600 dark:bg-blue-500 transition-all duration-100"
+                        style={{ width: `${(currentTime / duration) * 100}%` }}
+                      />
                     </div>
                     <span className="text-xs w-10">{formatTime(duration)}</span>
                   </div>
@@ -264,7 +316,7 @@ export default function PlayerPage() {
                       Record Your Voice
                     </h2>
                   </div>
-                  <Recorder />
+                  <Recorder songName={files.mp3.name} />
                 </div>
               </div>
             </div>

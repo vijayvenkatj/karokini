@@ -3,8 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { Mic, MicOff, StopCircle, Settings, Save } from "lucide-react";
 import { storeAudio } from "@/data-access/recorder";
 
-export const Recorder = () => {
-  const [recordingState, setRecordingState] = useState<
+export const Recorder = ({songName="UR"}: {songName?: string}) => {
+  const [recordingState, setRecordingState ] = useState<
     "idle" | "recording" | "disabled"
   >("disabled");
   const [showMicOptions, setShowMicOptions] = useState(false);
@@ -155,7 +155,7 @@ export const Recorder = () => {
     if (!chunks.current.length) return;
     setIsStoring(true);
     try {
-      const { success, error } = await storeAudio(chunks.current, mimeType);
+      const { success, error } = await storeAudio(chunks.current, mimeType, songName);
       if (success) {
         console.log("Audio stored successfully");
         setAudioBlob(null);

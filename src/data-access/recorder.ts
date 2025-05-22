@@ -3,64 +3,83 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export const storeAudio = async (chunks: Blob[], mimeType: string) => {
-  const AudioBlob = new Blob(chunks, { type: mimeType });
+const BUCKET_NAME = "karoke-files";
+
+export const storeAudio = async (
+  chunks: Blob[],
+  mimeType: string,
+  songName: string
+) => {
+  const audioBlob = new Blob(chunks, { type: mimeType });
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { success: false, error: "User not authenticated" };
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) throw userError;
+    if (!user || !user.email) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const extension = mimeType.split("/")[1] || "webm";
+    const safeSongName = encodeURIComponent(songName);
+    const safeEmail = encodeURIComponent(user.email);
+    const fileName = `audio/${safeSongName}-${Date.now()}-${safeEmail}.${extension}`;
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, audioBlob);
+
+    if (error) throw error;
+
+    revalidatePath("/recorder");
+
+    return { success: true, data };
+  } catch (err: any) {
+    console.error("Upload Error:", err.message);
+    return { success: false, error: err.message || "Upload failed" };
   }
-
-  const bucketName = "karoke-files";
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(`audio/${user.email! + Date.now()}.webm`, AudioBlob);
-
-  if (error) {
-    console.log(error);
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/recorder");
-
-  return { success: true, data };
 };
 
 export const getUserAudio = async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error) {
-    return { success: false, error: error.message };
-  }
-  const bucketName = "karoke-files";
 
-  const { data: list, error: listError } = await supabase.storage
-    .from(bucketName)
-    .list("audio");
-  if (listError) {
-    return { success: false, error: listError.message };
-  }
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-  const userFileList = list.filter((l) => l.name.startsWith(user?.email!));
-  const userAudiopaths = userFileList.map((file) => `audio/${file.name}`);
+    if (userError) throw userError;
+    if (!user || !user.email) {
+      return { success: false, error: "User not authenticated" };
+    }
 
-  const { data: signedUrls, error: urlError } = await supabase.storage
-    .from(bucketName)
-    .createSignedUrls(userAudiopaths, 3600);
+    const { data: list, error: listError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .list("audio");
 
-  if (urlError) {
-    return { success: false, error: urlError.message };
-  }
-  if (signedUrls?.length == 0) {
-    return { success: true, signedUrls: [] };
-  }
+    if (listError) throw listError;
 
-  if (signedUrls) {
+    // FIX: don't encode email when filtering
+    const userFileList =
+      list?.filter((file) => file.name.includes(user.email!)) || [];
+
+    const userAudioPaths = userFileList.map((file) => `audio/${file.name}`);
+
+    if (userAudioPaths.length === 0) {
+      return { success: true, signedUrls: [] };
+    }
+
+    const { data: signedUrls, error: urlError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrls(userAudioPaths, 3600); // 1 hour
+
+    if (urlError) throw urlError;
+
     return {
       success: true,
       signedUrls: signedUrls.map((url) => ({
@@ -68,5 +87,8 @@ export const getUserAudio = async () => {
         path: url.path,
       })),
     };
+  } catch (err: any) {
+    console.error("Fetch Audio Error:", err.message);
+    return { success: false, error: err.message || "Could not fetch audio" };
   }
 };
