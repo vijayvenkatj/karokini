@@ -2,8 +2,9 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-export const storeAudio = async (chunks: Blob[]) => {
-  const AudioBlob = new Blob(chunks, { type: "audio/webm" });
+
+export const storeAudio = async (chunks: Blob[], mimeType: string) => {
+  const AudioBlob = new Blob(chunks, { type: mimeType });
   const supabase = await createClient();
   const {
     data: { user },

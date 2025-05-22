@@ -13,6 +13,7 @@ export const Recorder = () => {
   const [selectedMic, setSelectedMic] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [isStoring, setIsStoring] = useState(false);
+  const [mimeType, setMimeType] = useState<string | null>(null);
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -62,10 +63,10 @@ export const Recorder = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: selectedMic ? { deviceId: selectedMic } : true,
       });
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+      const mimeTypeSupported = MediaRecorder.isTypeSupported("audio/webm")
         ? "audio/webm"
         : "audio/mp4"; // or "audio/ogg"
-
+      setMimeType(mimeTypeSupported);
       mediaRecorder.current = new MediaRecorder(stream, { mimeType });
 
       mediaRecorder.current = new MediaRecorder(stream, {
@@ -152,7 +153,7 @@ export const Recorder = () => {
     if (!chunks.current.length) return;
     setIsStoring(true);
     try {
-      const { success, error } = await storeAudio(chunks.current);
+      const { success, error } = await storeAudio(chunks.current, mimeType);
       if (success) {
         console.log("Audio stored successfully");
         setAudioBlob(null);
