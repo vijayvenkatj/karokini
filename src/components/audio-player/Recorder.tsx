@@ -44,19 +44,6 @@ export const Recorder = () => {
     }
   };
 
-  const getMicrophonePermissions = async () => {
-    try {
-      stopTracks();
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: selectedMic ? { deviceId: selectedMic } : true,
-      });
-
-      mediaRecorder.current = new MediaRecorder(stream);
-    } catch (error) {
-      console.error("Microphone permission error:", error);
-    }
-  };
-
   const getDeviceDetails = async () => {
     try {
       const mediaDevices = await navigator.mediaDevices.enumerateDevices();
@@ -69,36 +56,45 @@ export const Recorder = () => {
     }
   };
 
-  const startRecording = () => {
-    if (!mediaRecorder.current) {
-      throw Error("MainRecorder is null");
-    }
-
-    chunks.current = [];
-
-    mediaRecorder.current.ondataavailable = (e: BlobEvent) => {
-      if (e.data && e.data.size > 0) {
-        chunks.current.push(e.data);
-      }
-    };
-
-    mediaRecorder.current.onstop = () => {
-      console.log("On stop handler");
-      stopTracks();
-      const blob = new Blob(chunks.current, { type: "audio/webm" });
-      setAudioBlob(blob);
-      setRecordingState("idle");
-    };
-
-    mediaRecorder.current.onerror = (error) => {
-      throw Error(error.error);
-    };
-
+  const startRecording = async () => {
     try {
+      stopTracks();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: selectedMic ? { deviceId: selectedMic } : true,
+      });
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "audio/mp4"; // or "audio/ogg"
+
+      mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+
+      mediaRecorder.current = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
+      chunks.current = [];
+
+      mediaRecorder.current.ondataavailable = (e: BlobEvent) => {
+        if (e.data && e.data.size > 0) {
+          chunks.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.current.onstop = () => {
+        console.log("On stop handler");
+        stopTracks();
+        const blob = new Blob(chunks.current, { type: "audio/webm" });
+        setAudioBlob(blob);
+        setRecordingState("idle");
+      };
+
+      mediaRecorder.current.onerror = (error) => {
+        throw Error(error.error);
+      };
       mediaRecorder.current.start();
       setRecordingState("recording");
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      return;
     }
   };
 
@@ -132,13 +128,6 @@ export const Recorder = () => {
     }
   }, [devices]);
 
-  // Only re-acquire stream when mic actually changes (not on permission)
-  useEffect(() => {
-    if (selectedMic && permission === "granted") {
-      getMicrophonePermissions();
-    }
-  }, [selectedMic]);
-
   const handleRecording = () => {
     if (recordingState === "disabled") return;
     if (recordingState == "idle") {
@@ -153,7 +142,6 @@ export const Recorder = () => {
   const toggleMicrophoneState = () => {
     if (recordingState === "disabled") {
       setRecordingState("idle");
-      getMicrophonePermissions();
     } else {
       setRecordingState("disabled");
       stopTracks();
