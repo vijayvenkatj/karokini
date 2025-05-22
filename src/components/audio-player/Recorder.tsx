@@ -136,7 +136,13 @@ export const Recorder = () => {
   };
 
   const toggleMicrophoneState = () => {
-    setRecordingState(recordingState === "disabled" ? "idle" : "disabled");
+    if (recordingState === "disabled") {
+      setRecordingState("idle");
+      getMicrophonePermissions();
+    } else {
+      setRecordingState("disabled");
+      stopTracks();
+    }
   };
 
   const handleStoreAudio = async () => {
