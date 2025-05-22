@@ -162,7 +162,13 @@ export default function PlayerPage() {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
       } else {
         soundRef.current.play();
-        updateProgress();
+        // Don't check isPlaying here — it hasn't updated yet
+        const loop = () => {
+          const currentSeek = soundRef.current?.seek();
+          if (typeof currentSeek === "number") setCurrentTime(currentSeek);
+          rafRef.current = requestAnimationFrame(loop);
+        };
+        loop();
       }
     }
   };
